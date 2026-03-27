@@ -1,0 +1,45 @@
+services:
+  postgres-keycloak:
+    image: postgres:18
+    container_name: postgres-keycloak
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - postgres-keycloak-data:/var/lib/postgresql
+    ports:
+      - '3998:5432' # Mapped to 3998 to prevent conflicts
+    networks:
+      - keycloak-net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-keycloak:5432/postgres
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: 1234
+    command:
+      - start-dev
+    ports:
+      - '8080:8080' # Keycloak running on 8080
+    depends_on:
+      - postgres-keycloak
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - keycloak-net
+
+volumes:
+  postgres-keycloak-data:
+  keycloak-data:
+
+networks:
+  keycloak-net:
