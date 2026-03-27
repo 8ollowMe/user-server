@@ -16,7 +16,7 @@ services:
       - keycloak-net
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.1
+    image: quay.io/keycloak/keycloak:26.5.6
     container_name: keycloak
     restart: unless-stopped
     environment:
@@ -29,7 +29,7 @@ services:
     command:
       - start-dev
     ports:
-      - '9090:9090' # Keycloak running on 9090
+      - '9090:8080' # Keycloak running on 9090
     depends_on:
       - postgres-keycloak
     volumes:
