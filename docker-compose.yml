@@ -29,7 +29,7 @@ services:
     command:
       - start-dev
     ports:
-      - '8080:8080' # Keycloak running on 8080
+      - '9090:9090' # Keycloak running on 9090
     depends_on:
       - postgres-keycloak
     volumes:
