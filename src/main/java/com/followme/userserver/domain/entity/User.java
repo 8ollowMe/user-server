@@ -25,9 +25,6 @@ public class User extends BaseAudit {
     @Column(nullable = false, unique = true, length = 10)
     private String username;
 
-    @Column(nullable = false, length = 100)
-    private String password;
-
     @Column(nullable = false, length = 50)
     private String name;
 
