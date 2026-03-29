@@ -41,6 +41,9 @@ public class UserService {
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
         kcUser.setEnabled(true);
+        kcUser.setLastName(request.getName());
+        kcUser.setFirstName("."); // Keycloak은 firstName이 필수라서 임의로 넣어줍니다.
+        kcUser.setEmail(request.getUsername() + "@test.com"); // Keycloak은 이메일이 필수라서 임의로 넣어줍니다.
 
         // 2-2. Keycloak에 보낼 비밀번호
         CredentialRepresentation credential = new CredentialRepresentation();
@@ -48,6 +51,7 @@ public class UserService {
         credential.setValue(request.getPassword());
         credential.setTemporary(false);
 
+        
         // 2-3. 유저 정보 안에 비밀번호 넣기
         kcUser.setCredentials(List.of(credential));
 
