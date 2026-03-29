@@ -26,7 +26,6 @@ public class UserService {
         // 2. DTO 데이터를 바탕으로 엔티티 조립
         User newUser = User.builder()
                 .username(request.getUsername())
-                .password(request.getPassword()) 
                 .name(request.getName())
                 .address(request.getAddress())
                 .phone(request.getPhone())
