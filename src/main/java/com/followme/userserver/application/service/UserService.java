@@ -5,7 +5,16 @@ import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.UserErrorCode;
+
+import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +24,11 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final Keycloak keycloak;
+
+    @Value("${keycloak.realm}")
+    private String realm;
+    
     @Transactional
     public void registerUser(UserRegisterRequestDto request) {
         
@@ -23,7 +37,28 @@ public class UserService {
             throw UserErrorCode.DUPLICATE_USERNAME.toException(); 
         }
 
-        // 2. DTO 데이터를 바탕으로 엔티티 조립
+        // 2-1. Keycloak에 보낼 유저 정보
+        UserRepresentation kcUser = new UserRepresentation();
+        kcUser.setUsername(request.getUsername());
+        kcUser.setEnabled(true);
+
+        // 2-2. Keycloak에 보낼 비밀번호
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(request.getPassword());
+        credential.setTemporary(false);
+
+        // 2-3. 유저 정보 안에 비밀번호 넣기
+        kcUser.setCredentials(List.of(credential));
+
+        // 2-4. 핫라인으로 API 전송
+        Response response = keycloak.realm(realm).users().create(kcUser);
+
+        if (response.getStatus() != 201) {
+            throw UserErrorCode.KEYCLOAK_SYNC_FAILED.toException();
+        }
+
+        // 3. 로컬 DB용 엔티티
         User newUser = User.builder()
                 .username(request.getUsername())
                 .name(request.getName())
@@ -36,7 +71,7 @@ public class UserService {
                 .vendorId(request.getVendorId())
                 .build();
 
-        // 3. DB에 저장
+        // 4. DB에 저장
         userRepository.save(newUser);
     }
 }
