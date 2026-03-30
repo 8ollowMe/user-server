@@ -3,6 +3,7 @@ package com.followme.userserver.presentation.controller;
 import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.annotation.CurrentUser;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
+import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.application.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +29,11 @@ public class UserController {
         return ApiResponse.created();
     }
 
-    @GetMapping("/me-test")
-    public ResponseEntity<ApiResponse> testCurrentUser(@CurrentUser String username) {
-        // 토큰에서 뽑아온 username을 그대로 응답 데이터(data)로 내려보내 봅니다.
-        return ResponseEntity.ok(ApiResponse.success(username));
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser String username) {
+        
+        UserResponseDto responseDto = userService.getUserProfile(username);
+        
+        return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 }

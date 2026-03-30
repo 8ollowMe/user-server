@@ -1,12 +1,14 @@
 package com.followme.userserver.application.service;
 
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
+import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.repository.UserRepository;
 // 💡 새롭게 만든 예외 클래스들을 import 합니다.
 import com.followme.userserver.exception.DuplicateUsernameException;
 import com.followme.userserver.exception.KeycloakSyncException;
+import com.followme.userserver.exception.UserNotFoundException;
 
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -68,5 +70,15 @@ public class UserService {
 
         // 4. DB에 저장
         userRepository.save(newUser);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDto getUserProfile(String username) {
+        // 1. DB에서 유저 조회
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. MapStruct를 이용해 Entity -> DTO 변환 후 반환
+        return userMapper.toResponseDto(user);
     }
 }
