@@ -31,11 +31,17 @@ repositories {
     }
 }
 
+ext {
+    // Spring Boot 3.x 버전과 호환되는 Spring Cloud 버전입니다.
+    set('springCloudVersion', "2025.0.0")
+}
+
 dependencies {
 	implementation 'com.followMe:common-lib:1.0.1' // 공통 라이브러리 의존성 추가
 
 	implementation 'org.keycloak:keycloak-admin-client:24.0.1' // Keycloak Admin Client 의존성 추가
 
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -47,6 +53,13 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        // 이 블록이 누락된 라이브러리의 버전을 자동으로 주입합니다.
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 tasks.named('test') {
