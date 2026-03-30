@@ -64,17 +64,4 @@ public class User extends BaseAudit {
         super.softDelete(deletedByUserId); 
     }
 
-    public static User create(UserRegisterRequestDto request) {
-        return User.builder()
-                .username(request.getUsername())
-                .name(request.getName())
-                .address(request.getAddress())
-                .phone(request.getPhone())
-                .slackId(request.getSlackId())
-                .role(request.getRole())
-                .status(UserStatus.PENDING) 
-                .hubId(request.getHubId())
-                .vendorId(request.getVendorId())
-                .build();
-    }
 }

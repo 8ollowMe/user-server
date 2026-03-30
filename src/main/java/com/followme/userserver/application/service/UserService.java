@@ -1,8 +1,8 @@
 package com.followme.userserver.application.service;
 
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
+import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
-import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 // 💡 새롭게 만든 예외 클래스들을 import 합니다.
 import com.followme.userserver.exception.DuplicateUsernameException;
@@ -26,6 +26,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final Keycloak keycloak;
+    private final UserMapper userMapper;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -63,7 +64,7 @@ public class UserService {
         }
 
         // 3. 로컬 DB용 엔티티
-        User newUser = User.create(request);
+        User newUser = userMapper.toEntity(request);
 
         // 4. DB에 저장
         userRepository.save(newUser);
