@@ -1,7 +1,7 @@
 package com.followme.userserver.application.mapper;
 
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
-import com.followme.userserver.application.dto.UserResponseDto; // 💡 DTO import 추가
+import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.domain.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
