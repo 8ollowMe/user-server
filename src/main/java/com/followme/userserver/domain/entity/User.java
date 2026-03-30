@@ -10,12 +10,15 @@ import lombok.*;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLRestriction;
+
 @Entity
 @Table(name = "p_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@SQLRestriction("status != 'DELETED'")
 public class User extends BaseAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -77,6 +80,10 @@ public class User extends BaseAudit {
         if (request.getSlackId() != null) {
             this.slackId = request.getSlackId();
         }
+    }
+
+    public void deactivateAccount() {
+        this.status = UserStatus.DELETED;
     }
 
 }

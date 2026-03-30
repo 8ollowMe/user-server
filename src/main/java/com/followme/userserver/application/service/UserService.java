@@ -96,4 +96,16 @@ public class UserService {
         // 3. 수정된 결과를 다시 DTO로 변환하여 반환
         return userMapper.toResponseDto(user);
     }
+
+    @Transactional
+    public void deactivateMyAccount(String username) {
+        // 1. 유저 조회
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 비활성화 비즈니스 로직 호출 (JPA Dirty Checking으로 자동 UPDATE 됨)
+        user.deactivateAccount();
+        
+        // 나중에 Keycloak 서버에도 API를 쏴서 해당 유저를 Disable 시키는 로직이 이곳에 추가되어야 합니다
+    }
 }
