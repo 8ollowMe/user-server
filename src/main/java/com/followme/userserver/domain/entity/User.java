@@ -21,8 +21,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("status != 'DELETED'")
 public class User extends BaseAudit {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "user_id", updatable = false, nullable = false)
+    @Column(name = "user_id", nullable = false,columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 10)
@@ -54,6 +53,12 @@ public class User extends BaseAudit {
     @Column(name = "vendor_id")
     private UUID vendorId;
 
+
+    
+    public void setId(UUID id) {
+        this.id = id;
+    }
+    
     public void approve() {
         this.status = UserStatus.APPROVED;
     }
@@ -82,8 +87,10 @@ public class User extends BaseAudit {
         }
     }
 
-    public void deactivateAccount() {
+    public void deactivateAccount(String deleterUsername) {
         this.status = UserStatus.DELETED;
+
+        this.softDelete(deleterUsername);
     }
 
 }

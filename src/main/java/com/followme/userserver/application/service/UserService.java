@@ -15,11 +15,13 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ public class UserService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateUsernameException();
         }
+
 
         // 2-1. Keycloak에 보낼 유저 정보
         UserRepresentation kcUser = new UserRepresentation();
@@ -65,11 +68,17 @@ public class UserService {
         if (response.getStatus() != 201) {
             throw new KeycloakSyncException();
         }
+        // 3. Keycloak이 방금 생성한 유저의 UUID 추출하기
+        String path = response.getLocation().getPath();
+        String keycloakUserId = path.substring(path.lastIndexOf('/') + 1);
 
-        // 3. 로컬 DB용 엔티티
+        // 4. 로컬 DB용 엔티티
         User newUser = userMapper.toEntity(request);
 
-        // 4. DB에 저장
+        // 5. 뽑아낸 Keycloak ID를 로컬 엔티티의 ID로 강제 주입
+        newUser.setId(UUID.fromString(keycloakUserId));
+
+        // 6. DB에 저장
         userRepository.save(newUser);
     }
 
@@ -103,9 +112,31 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 2. 비활성화 비즈니스 로직 호출 (JPA Dirty Checking으로 자동 UPDATE 됨)
-        user.deactivateAccount();
+        // 2. 토큰 인증 객체에서 직접 ID(Keycloak UUID)를 추출
+        String currentTokenUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         
-        // 나중에 Keycloak 서버에도 API를 쏴서 해당 유저를 Disable 시키는 로직이 이곳에 추가되어야 합니다
+        user.deactivateAccount(currentTokenUserId);
+        
+        try {
+            // 3-1. Keycloak에서 해당 username으로 유저 검색
+            List<UserRepresentation> kcUsers = keycloak.realm(realm).users().search(username);
+            
+            if (kcUsers != null && !kcUsers.isEmpty()) {
+                // 검색된 유저(보통 1명) 정보 가져오기
+                UserRepresentation kcUser = kcUsers.get(0); 
+                
+                // 3-2. 상태를 비활성화(Enabled = false)로 변경
+                kcUser.setEnabled(false); 
+                
+                // 3-3. Keycloak 서버에 변경된 정보 업데이트 요청
+                keycloak.realm(realm).users().get(kcUser.getId()).update(kcUser);
+            } else {
+                // Keycloak에 유저가 없는 극히 드문 예외 상황 처리
+                throw new KeycloakSyncException(); 
+            }
+        } catch (Exception e) {
+            // Keycloak 서버 통신 장애 등 예외 발생 시 트랜잭션 롤백을 위해 예외 던지기
+            throw new KeycloakSyncException(); 
+        }
     }
 }
