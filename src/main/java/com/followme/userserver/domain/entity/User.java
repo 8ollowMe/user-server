@@ -2,6 +2,7 @@ package com.followme.userserver.domain.entity;
 
 
 import com.followMe.common.entity.BaseAudit;
+import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import jakarta.persistence.*;
@@ -61,6 +62,21 @@ public class User extends BaseAudit {
     public void deleteUser(String deletedByUserId) {
         this.status = UserStatus.DELETED;
         super.softDelete(deletedByUserId); 
+    }
+
+    public void updateProfile(UserUpdateRequestDto request) {
+        if (request.getName() != null) {
+            this.name = request.getName();
+        }
+        if (request.getAddress() != null) {
+            this.address = request.getAddress();
+        }
+        if (request.getPhone() != null) {
+            this.phone = request.getPhone();
+        }
+        if (request.getSlackId() != null) {
+            this.slackId = request.getSlackId();
+        }
     }
 
 }

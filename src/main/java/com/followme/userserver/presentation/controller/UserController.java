@@ -4,11 +4,13 @@ import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.annotation.CurrentUser;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +35,16 @@ public class UserController {
     public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser String username) {
         
         UserResponseDto responseDto = userService.getUserProfile(username);
+        
+        return ResponseEntity.ok(ApiResponse.success(responseDto));
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse> updateMyProfile(
+            @CurrentUser String username,
+            @RequestBody UserUpdateRequestDto request) {
+
+        UserResponseDto responseDto = userService.updateUserProfile(username, request);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }

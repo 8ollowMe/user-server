@@ -2,6 +2,7 @@ package com.followme.userserver.application.service;
 
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.repository.UserRepository;
@@ -79,6 +80,20 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
 
         // 2. MapStruct를 이용해 Entity -> DTO 변환 후 반환
+        return userMapper.toResponseDto(user);
+    }
+
+    @Transactional
+    public UserResponseDto updateUserProfile(String username, UserUpdateRequestDto request) {
+        
+        // 1. 유저 조회
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 엔티티 비즈니스 메서드 호출 (데이터 수정)
+        user.updateProfile(request);
+
+        // 3. 수정된 결과를 다시 DTO로 변환하여 반환
         return userMapper.toResponseDto(user);
     }
 }
