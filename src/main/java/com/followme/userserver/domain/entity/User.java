@@ -2,7 +2,6 @@ package com.followme.userserver.domain.entity;
 
 
 import com.followMe.common.entity.BaseAudit;
-import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import jakarta.persistence.*;
