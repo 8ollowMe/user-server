@@ -1,8 +1,8 @@
 package com.followme.userserver.domain.entity;
 
 
-import com.followMe.common.entity.BaseAudit; 
-
+import com.followMe.common.entity.BaseAudit;
+import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import jakarta.persistence.*;
@@ -62,5 +62,19 @@ public class User extends BaseAudit {
     public void deleteUser(String deletedByUserId) {
         this.status = UserStatus.DELETED;
         super.softDelete(deletedByUserId); 
+    }
+
+    public static User create(UserRegisterRequestDto request) {
+        return User.builder()
+                .username(request.getUsername())
+                .name(request.getName())
+                .address(request.getAddress())
+                .phone(request.getPhone())
+                .slackId(request.getSlackId())
+                .role(request.getRole())
+                .status(UserStatus.PENDING) 
+                .hubId(request.getHubId())
+                .vendorId(request.getVendorId())
+                .build();
     }
 }

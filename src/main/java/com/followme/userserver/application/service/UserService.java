@@ -4,7 +4,9 @@ import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
-import com.followme.userserver.exception.UserErrorCode;
+// 💡 새롭게 만든 예외 클래스들을 import 합니다.
+import com.followme.userserver.exception.DuplicateUsernameException;
+import com.followme.userserver.exception.KeycloakSyncException;
 
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-
     private final Keycloak keycloak;
 
     @Value("${keycloak.realm}")
@@ -34,7 +35,7 @@ public class UserService {
         
         // 1. 아이디 중복 검증 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw UserErrorCode.DUPLICATE_USERNAME.toException(); 
+            throw new DuplicateUsernameException();
         }
 
         // 2-1. Keycloak에 보낼 유저 정보
@@ -50,7 +51,6 @@ public class UserService {
         credential.setType(CredentialRepresentation.PASSWORD);
         credential.setValue(request.getPassword());
         credential.setTemporary(false);
-
         
         // 2-3. 유저 정보 안에 비밀번호 넣기
         kcUser.setCredentials(List.of(credential));
@@ -59,21 +59,11 @@ public class UserService {
         Response response = keycloak.realm(realm).users().create(kcUser);
 
         if (response.getStatus() != 201) {
-            throw UserErrorCode.KEYCLOAK_SYNC_FAILED.toException();
+            throw new KeycloakSyncException();
         }
 
         // 3. 로컬 DB용 엔티티
-        User newUser = User.builder()
-                .username(request.getUsername())
-                .name(request.getName())
-                .address(request.getAddress())
-                .phone(request.getPhone())
-                .slackId(request.getSlackId())
-                .role(request.getRole())
-                .status(UserStatus.PENDING)
-                .hubId(request.getHubId())
-                .vendorId(request.getVendorId())
-                .build();
+        User newUser = User.create(request);
 
         // 4. DB에 저장
         userRepository.save(newUser);
