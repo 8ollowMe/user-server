@@ -11,6 +11,7 @@ import lombok.*;
 import java.util.UUID;
 
 import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(name = "p_user")
@@ -19,9 +20,10 @@ import org.hibernate.annotations.SQLRestriction;
 @AllArgsConstructor
 @Builder
 @SQLRestriction("status != 'DELETED'")
-public class User extends BaseAudit {
+public class User extends BaseAudit implements Persistable<UUID> {
+
     @Id
-    @Column(name = "user_id", nullable = false,columnDefinition = "BINARY(16)")
+    @Column(name = "user_id", nullable = false)
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 10)
@@ -53,6 +55,20 @@ public class User extends BaseAudit {
     @Column(name = "vendor_id")
     private UUID vendorId;
 
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return this.isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    protected void markNotNew() {
+        this.isNew = false;
+    }
 
     
     public void setId(UUID id) {
@@ -87,7 +103,7 @@ public class User extends BaseAudit {
         }
     }
 
-    public void deactivateAccount(String deleterUsername) {
+    public void deactivateAccount(UUID deleterUsername) {
         this.status = UserStatus.DELETED;
 
         this.softDelete(deleterUsername);

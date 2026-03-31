@@ -115,7 +115,7 @@ public class UserService {
         // 2. 토큰 인증 객체에서 직접 ID(Keycloak UUID)를 추출
         String currentTokenUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         
-        user.deactivateAccount(currentTokenUserId);
+        user.deactivateAccount(java.util.UUID.fromString(currentTokenUserId));
         
         try {
             // 3-1. Keycloak에서 해당 username으로 유저 검색
