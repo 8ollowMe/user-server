@@ -67,7 +67,7 @@ public class User extends BaseAudit {
         this.status = UserStatus.REJECTED;
     }
 
-    public void deleteUser(String deletedByUserId) {
+    public void deleteUser(UUID deletedByUserId) {
         this.status = UserStatus.DELETED;
         super.softDelete(deletedByUserId); 
     }
