@@ -35,6 +35,9 @@ public class SecurityConfig {
             
             // 3. API 명세서 기반 권한 정밀 제어
             .authorizeHttpRequests(auth -> auth
+
+                .requestMatchers("/error").permitAll() // Spring Boot 기본 에러 페이지는 인증 없이 접근 가능하도록 허용
+                
                 // [그룹 1] Public: 로그인 없이 접근 가능
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
 

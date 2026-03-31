@@ -10,6 +10,7 @@ import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
 import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
+import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.DuplicateUsernameException;
@@ -223,4 +224,22 @@ public class UserService {
                 .toList();
     }
     
+
+    @Transactional(readOnly = true)
+    public String getUserSlackId(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        return user.getSlackId();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserInternalResponseDto> getManagersByHub(UUID hubId) {
+        // 1. 해당 허브(hubId)에 소속된 관리자(UserRole.HUB) 목록 조회
+        List<User> managers = userRepository.findAllByHubIdAndRole(hubId, UserRole.HUB);
+
+        // 2. 내부 통신용 DTO로 변환하여 반환
+        return managers.stream()
+                .map(userMapper::toInternalResponseDto)
+                .toList();
+    }
 }

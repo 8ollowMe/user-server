@@ -38,4 +38,15 @@ public class InternalUserController {
         return ApiResponse.ok(responseList);
     }
     
+    @GetMapping("/{userId}/slack-id")
+    public ResponseEntity<ApiResponse> getUserSlackId(@PathVariable UUID userId) {
+        String slackId = userService.getUserSlackId(userId);
+        return ApiResponse.ok(slackId);
+    }
+
+    @GetMapping("/hub/{hubId}/managers")
+    public ResponseEntity<ApiResponse> getManagersByHub(@PathVariable UUID hubId) {
+        List<UserInternalResponseDto> responseList = userService.getManagersByHub(hubId);
+        return ApiResponse.ok(responseList);
+    }
 }
