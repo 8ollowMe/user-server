@@ -2,6 +2,7 @@ package com.followme.userserver.application.service;
 
 import com.followMe.common.exception.BusinessException;
 import com.followMe.common.exception.CommonErrorCode;
+import com.followMe.common.pagination.PageResponse;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
@@ -25,6 +26,8 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,5 +182,15 @@ public class UserService {
         return userMapper.toResponseDto(user);
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponseDto> getAllUsers(Pageable pageable) {
+        
+        // 1. Pageable 객체를 사용하여 DB에서 페이징된 엔티티 목록 조회
+        // @SQLRestriction("status != 'DELETED'")가 있으므로 삭제된 유저는 자동 제외됨
+        Page<User> userPage = userRepository.findAll(pageable);
+
+        // 2. common-lib의 팩토리 메서드를 사용하여 Entity Page를 DTO PageResponse로 변환
+        return PageResponse.of(userPage, userMapper::toResponseDto);
+    }
     
 }
