@@ -3,6 +3,7 @@ package com.followme.userserver.application.service;
 import com.followMe.common.exception.BusinessException;
 import com.followMe.common.exception.CommonErrorCode;
 import com.followMe.common.pagination.PageResponse;
+import com.followme.userserver.application.dto.UserInternalResponseDto;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
@@ -198,6 +199,28 @@ public class UserService {
 
         // 2. common-lib의 팩토리 메서드를 사용하여 Entity Page를 DTO PageResponse로 변환
         return PageResponse.of(userPage, userMapper::toResponseDto);
+    }
+
+
+    
+
+    // Internal Service 
+    @Transactional(readOnly = true)
+    public UserInternalResponseDto getUserInternal(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        return userMapper.toInternalResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserInternalResponseDto> getUsersInternal(List<UUID> userIds) {
+        // 1. 유효한 ID 리스트로 한꺼번에 조회
+        List<User> users = userRepository.findAllById(userIds);
+        
+        // 2. 리스트 변환
+        return users.stream()
+                .map(userMapper::toInternalResponseDto)
+                .toList();
     }
     
 }

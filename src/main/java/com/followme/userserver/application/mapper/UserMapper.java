@@ -1,5 +1,6 @@
 package com.followme.userserver.application.mapper;
 
+import com.followme.userserver.application.dto.UserInternalResponseDto;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.domain.entity.User;
@@ -16,4 +17,6 @@ public interface UserMapper {
     @Mapping(source = "id", target = "userId")
     UserResponseDto toResponseDto(User user);
     
+    @Mapping(source = "id", target = "userId")
+    UserInternalResponseDto toInternalResponseDto(User user);
 }
