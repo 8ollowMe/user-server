@@ -157,18 +157,25 @@ public class UserService {
 
         // 2. 비즈니스 로직 및 Keycloak 상태 동기화
         if (request.getStatus() == UserStatus.APPROVED) {
-            user.approve();
+            user.approve(); // DB 상태 APPROVED로 변경
+            
+            // 💡 Keycloak 계정 활성화 (로그인 가능 상태로)
             keycloakAdapter.syncKeycloakUserStatus(userId, true);
             
+            // 💡 🌟 핵심: DB에 저장된 유저의 권한을 Keycloak에도 쏴줍니다!
+            // (user.getRole().name() 은 DB에 저장된 "MASTER", "VENDOR" 등의 문자열을 반환한다고 가정)
+            keycloakAdapter.assignRealmRole(userId, user.getRole().name());
+            
         } else if (request.getStatus() == UserStatus.REJECTED) {
-            user.reject();
+            user.reject(); // DB 상태 REJECTED로 변경
+            
+            // Keycloak 계정 비활성화
             keycloakAdapter.syncKeycloakUserStatus(userId, false);
             
         } else {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
 
-        // 3. 결과 반환
         return userMapper.toResponseDto(user);
     }
 

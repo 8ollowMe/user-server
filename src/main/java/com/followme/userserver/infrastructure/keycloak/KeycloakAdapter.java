@@ -1,11 +1,14 @@
 package com.followme.userserver.infrastructure.keycloak;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,24 +25,36 @@ public class KeycloakAdapter {
     @Value("${keycloak.realm}")
     private String realm;
 
+
+    // Keycloak 서버의 유저 활성화/비활성화 상태를 동기화합니다.
     public void syncKeycloakUserStatus(UUID keycloakUserId, boolean isEnabled) {
         try {
-            // 1. ID로 Keycloak 유저 리소스에 직접 접근
             UserResource userResource = keycloak.realm(realm).users().get(keycloakUserId.toString());
-            
-            // 2. 현재 유저의 표현(Representation) 객체를 가져옴
             UserRepresentation kcUser = userResource.toRepresentation();
             
-            // 3. Enabled 상태 변경
             kcUser.setEnabled(isEnabled);
-            
-            // 4. Keycloak 서버에 업데이트 요청
             userResource.update(kcUser);
             
             log.info("Keycloak user status updated successfully. userId: {}, isEnabled: {}", keycloakUserId, isEnabled);
-            
         } catch (Exception e) {
             log.error("Failed to sync user status with Keycloak. userId: {}", keycloakUserId, e);
+            throw new KeycloakSyncException();
+        }
+    }
+
+    
+    // Keycloak 유저에게 특정 Realm Role(직급)을 부여합니다.
+    public void assignRealmRole(UUID keycloakUserId, String roleName) {
+        try {
+            RealmResource realmResource = keycloak.realm(realm);
+            RoleRepresentation roleToAssign = realmResource.roles().get(roleName).toRepresentation();
+            UserResource userResource = realmResource.users().get(keycloakUserId.toString());
+            
+            userResource.roles().realmLevel().add(Collections.singletonList(roleToAssign));
+            
+            log.info("Keycloak role [{}] assigned to user [{}] successfully.", roleName, keycloakUserId);
+        } catch (Exception e) {
+            log.error("Failed to assign role [{}] to Keycloak user [{}].", roleName, keycloakUserId, e);
             throw new KeycloakSyncException();
         }
     }
