@@ -169,5 +169,15 @@ public class UserService {
         return userMapper.toResponseDto(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserResponseDto getUserById(UUID userId) {
+        // 1. UUID를 기반으로 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. DTO로 변환하여 반환
+        return userMapper.toResponseDto(user);
+    }
+
     
 }
