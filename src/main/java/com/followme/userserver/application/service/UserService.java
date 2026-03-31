@@ -1,15 +1,19 @@
 package com.followme.userserver.application.service;
 
+import com.followMe.common.exception.BusinessException;
+import com.followMe.common.exception.CommonErrorCode;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
 import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
+import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
-// 💡 새롭게 만든 예외 클래스들을 import 합니다.
 import com.followme.userserver.exception.DuplicateUsernameException;
 import com.followme.userserver.exception.KeycloakSyncException;
 import com.followme.userserver.exception.UserNotFoundException;
+import com.followme.userserver.infrastructure.keycloak.KeycloakAdapter;
 
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +36,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final Keycloak keycloak;
     private final UserMapper userMapper;
+    private final KeycloakAdapter keycloakAdapter;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -48,9 +53,12 @@ public class UserService {
         // 2-1. Keycloak에 보낼 유저 정보
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
-        kcUser.setEnabled(true);
+
+        kcUser.setEnabled(false); // 가입 시에는 비활성화 상태로 시작 (관리자 승인 후 활성화)
+
         kcUser.setLastName(request.getName());
         kcUser.setFirstName("."); // Keycloak은 firstName이 필수라서 임의로 넣어줍니다.
+
         kcUser.setEmail(request.getUsername() + "@test.com"); // Keycloak은 이메일이 필수라서 임의로 넣어줍니다.
 
         // 2-2. Keycloak에 보낼 비밀번호
@@ -131,12 +139,35 @@ public class UserService {
                 // 3-3. Keycloak 서버에 변경된 정보 업데이트 요청
                 keycloak.realm(realm).users().get(kcUser.getId()).update(kcUser);
             } else {
-                // Keycloak에 유저가 없는 극히 드문 예외 상황 처리
                 throw new KeycloakSyncException(); 
             }
         } catch (Exception e) {
-            // Keycloak 서버 통신 장애 등 예외 발생 시 트랜잭션 롤백을 위해 예외 던지기
             throw new KeycloakSyncException(); 
         }
     }
+
+    @Transactional
+    public UserResponseDto updateUserStatus(UUID userId, UserStatusUpdateRequestDto request) {
+        // 1. 대상 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 비즈니스 로직 및 Keycloak 상태 동기화
+        if (request.getStatus() == UserStatus.APPROVED) {
+            user.approve();
+            keycloakAdapter.syncKeycloakUserStatus(userId, true);
+            
+        } else if (request.getStatus() == UserStatus.REJECTED) {
+            user.reject();
+            keycloakAdapter.syncKeycloakUserStatus(userId, false);
+            
+        } else {
+            throw new BusinessException(CommonErrorCode.INVALID_INPUT);
+        }
+
+        // 3. 결과 반환
+        return userMapper.toResponseDto(user);
+    }
+
+    
 }

@@ -4,14 +4,19 @@ import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.annotation.CurrentUser;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
 import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,4 +63,13 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
     
+    @PatchMapping("/{userId}/status")
+    public ResponseEntity<ApiResponse> updateUserStatus(
+            @PathVariable UUID userId,
+            @RequestBody UserStatusUpdateRequestDto request) {
+        
+        UserResponseDto responseDto = userService.updateUserStatus(userId, request);
+        
+        return ResponseEntity.ok(ApiResponse.success(responseDto));
+    }
 }
