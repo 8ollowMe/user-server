@@ -3,7 +3,6 @@ package com.followme.userserver.application.resolver;
 import com.followMe.common.exception.BusinessException;
 import com.followMe.common.exception.CommonErrorCode;
 import com.followme.userserver.application.annotation.CurrentUser;
-import com.followme.userserver.exception.UserNotFoundException;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
