@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.followMe:common-lib:1.0.0' // 공통 라이브러리 의존성 추가
+	implementation 'com.followMe:common-lib:1.0.1' // 공통 라이브러리 의존성 추가
 
 	implementation 'org.keycloak:keycloak-admin-client:24.0.1' // Keycloak Admin Client 의존성 추가
 
