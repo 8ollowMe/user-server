@@ -1,7 +1,7 @@
 package com.followme.userserver.application.service;
 
 import com.followMe.common.pagination.PageResponse;
-import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.repository.UserRepository;
@@ -23,21 +23,21 @@ public class UserQueryService {
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
-    public UserResponseDto getUserProfile(String username) {
+    public UserResponse.Info getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
         return userMapper.toResponseDto(user);
     }
 
     @Transactional(readOnly = true)
-    public UserResponseDto getUserById(UUID userId) {
+    public UserResponse.Info getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         return userMapper.toResponseDto(user);
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<UserResponseDto> getAllUsers(Pageable pageable) {
+    public PageResponse<UserResponse.Info> getAllUsers(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
         return PageResponse.of(userPage, userMapper::toResponseDto);
     }

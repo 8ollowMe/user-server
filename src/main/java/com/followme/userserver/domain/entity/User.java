@@ -2,7 +2,7 @@ package com.followme.userserver.domain.entity;
 
 
 import com.followMe.common.entity.BaseAudit;
-import com.followme.userserver.application.dto.UserUpdateRequestDto;
+import com.followme.userserver.application.dto.UserRequest;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import jakarta.persistence.*;
@@ -88,7 +88,7 @@ public class User extends BaseAudit implements Persistable<UUID> {
         super.softDelete(deletedByUserId); 
     }
 
-    public void updateProfile(UserUpdateRequestDto request) {
+    public void updateProfile(UserRequest.UpdateProfile request) {
         if (request.getName() != null) {
             this.name = request.getName();
         }

@@ -2,10 +2,8 @@ package com.followme.userserver.application.service;
 
 import com.followMe.common.exception.BusinessException;
 import com.followMe.common.exception.CommonErrorCode;
-import com.followme.userserver.application.dto.UserRegisterRequestDto;
-import com.followme.userserver.application.dto.UserResponseDto;
-import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
-import com.followme.userserver.application.dto.UserUpdateRequestDto;
+import com.followme.userserver.application.dto.UserRequest;
+import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.application.port.AuthPort;
 import com.followme.userserver.domain.entity.User;
@@ -36,14 +34,13 @@ public class UserCommandService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final Keycloak keycloak;
-    private final KeycloakAdapter keycloakAdapter;
     private final AuthPort authPort;
 
     @Value("${keycloak.realm}")
     private String realm;
     
     @Transactional
-    public void registerUser(UserRegisterRequestDto request) {
+    public void registerUser(UserRequest.Register request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateUsernameException();
         }
@@ -78,7 +75,7 @@ public class UserCommandService {
     }
 
     @Transactional
-    public UserResponseDto updateUserProfile(String username, UserUpdateRequestDto request) {
+    public UserResponse.Info updateUserProfile(String username, UserRequest.UpdateProfile request) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
         user.updateProfile(request);
@@ -109,7 +106,7 @@ public class UserCommandService {
     }
 
     @Transactional
-    public UserResponseDto updateUserStatus(UUID userId, UserStatusUpdateRequestDto request) {
+    public UserResponse.Info updateUserStatus(UUID userId, UserRequest.UpdateStatus request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 

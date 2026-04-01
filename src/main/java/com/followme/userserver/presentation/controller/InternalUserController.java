@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.followMe.common.response.ApiResponse;
-import com.followme.userserver.application.dto.UserInternalResponseDto;
+import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.service.InternalUserQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,14 +27,14 @@ public class InternalUserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserInternal(@PathVariable UUID userId) {
-        UserInternalResponseDto response = internalUserQueryService.getUserInternal(userId);
+        UserResponse.Internal response = internalUserQueryService.getUserInternal(userId);
         return ApiResponse.ok(response);
     }
 
 
     @PostMapping("/list")
     public ResponseEntity<ApiResponse> getUsersInternal(@RequestBody List<UUID> userIds) {
-        List<UserInternalResponseDto> responseList = internalUserQueryService.getUsersInternal(userIds);
+        List<UserResponse.Internal> responseList = internalUserQueryService.getUsersInternal(userIds);
         return ApiResponse.ok(responseList);
     }
     
@@ -46,7 +46,7 @@ public class InternalUserController {
 
     @GetMapping("/hub/{hubId}/managers")
     public ResponseEntity<ApiResponse> getManagersByHub(@PathVariable UUID hubId) {
-        List<UserInternalResponseDto> responseList = internalUserQueryService.getManagersByHub(hubId);
+        List<UserResponse.Internal> responseList = internalUserQueryService.getManagersByHub(hubId);
         return ApiResponse.ok(responseList);
     }
 }
