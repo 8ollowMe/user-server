@@ -2,7 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.13'
 	id 'io.spring.dependency-management' version '1.1.7'
-	id 'com.diffplug.spotless' version '6.25.0' // Spotless 플러그인 추가
+	id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.followme'
@@ -32,12 +32,11 @@ repositories {
 }
 
 ext {
-    // Spring Boot 3.x 버전과 호환되는 Spring Cloud 버전입니다.
     set('springCloudVersion', "2025.0.0")
 }
 
 dependencies {
-	implementation 'com.followMe:common-lib:1.0.3' // 공통 라이브러리 의존성 추가
+	implementation 'com.followMe:common-lib:1.0.4' // 공통 라이브러리 의존성 추가
 
 	implementation 'org.keycloak:keycloak-admin-client:24.0.1' // Keycloak Admin Client 의존성 추가
 
