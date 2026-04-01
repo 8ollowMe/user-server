@@ -11,10 +11,12 @@ import com.followme.userserver.application.service.UserQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -42,27 +44,27 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser String username) {
+    public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser UUID userId) {
         
-        UserResponse.Info responseDto = userQueryService.getUserProfile(username);
+        UserResponse.Info responseDto = userQueryService.getUserProfile(userId);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse> updateMyProfile(
-            @CurrentUser String username,
+            @CurrentUser UUID userId,
             @RequestBody UserRequest.UpdateProfile request) {
 
-        UserResponse.Info responseDto = userCommandService.updateUserProfile(username, request);
+        UserResponse.Info responseDto = userCommandService.updateUserProfile(userId, request);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse> deactivateMyAccount(@CurrentUser String username) {
+    public ResponseEntity<ApiResponse> deactivateMyAccount(@CurrentUser UUID userId) {
         
-        userCommandService.deactivateMyAccount(username);
+        userCommandService.deactivateMyAccount(userId);
         
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -96,5 +98,22 @@ public class UserController {
         PageResponse<UserResponse.Info> responseDto = userQueryService.getAllUsers(pageable);
 
         return ResponseEntity.ok(ApiResponse.success(responseDto));
+    }
+
+    @GetMapping("/me/test")
+    public ResponseEntity<String> getMyInfoTest(
+            Principal principal, 
+            Authentication authentication) {
+        
+        // 1. User-Id 꺼내기 (필터에서 첫 번째 파라미터로 넣었던 값)
+        String userId = principal.getName();
+        
+        // 2. X-Role 꺼내기 (필터에서 Authority로 넣었던 값)
+        String role = authentication.getAuthorities().toString();
+
+        // 3. 화면에 잘 나오는지 조합해서 응답해보기
+        String result = String.format("🎉 인증 성공! \n내 아이디(UUID): %s \n내 권한(Role): %s", userId, role);
+        
+        return ResponseEntity.ok(result);
     }
 }

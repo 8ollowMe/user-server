@@ -23,8 +23,8 @@ public class UserQueryService {
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
-    public UserResponse.Info getUserProfile(String username) {
-        User user = userRepository.findByUsername(username)
+    public UserResponse.Info getUserProfile(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         return userMapper.toResponseDto(user);
     }

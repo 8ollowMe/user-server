@@ -12,7 +12,6 @@ import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.DuplicateUsernameException;
 import com.followme.userserver.exception.KeycloakSyncException;
 import com.followme.userserver.exception.UserNotFoundException;
-import com.followme.userserver.infrastructure.keycloak.KeycloakAdapter;
 
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -75,31 +74,25 @@ public class UserCommandService {
     }
 
     @Transactional
-    public UserResponse.Info updateUserProfile(String username, UserRequest.UpdateProfile request) {
-        User user = userRepository.findByUsername(username)
+    public UserResponse.Info updateUserProfile(UUID userId, UserRequest.UpdateProfile request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         user.updateProfile(request);
         return userMapper.toResponseDto(user);
     }
 
     @Transactional
-    public void deactivateMyAccount(String username) {
-        User user = userRepository.findByUsername(username)
+    public void deactivateMyAccount(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         String currentTokenUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         user.deactivateAccount(UUID.fromString(currentTokenUserId));
         
         try {
-            List<UserRepresentation> kcUsers = keycloak.realm(realm).users().search(username);
-            
-            if (kcUsers != null && !kcUsers.isEmpty()) {
-                UserRepresentation kcUser = kcUsers.get(0); 
-                kcUser.setEnabled(false); 
-                keycloak.realm(realm).users().get(kcUser.getId()).update(kcUser);
-            } else {
-                throw new KeycloakSyncException(); 
-            }
+            UserRepresentation kcUser = keycloak.realm(realm).users().get(userId.toString()).toRepresentation();
+            kcUser.setEnabled(false);
+            keycloak.realm(realm).users().get(userId.toString()).update(kcUser);
         } catch (Exception e) {
             throw new KeycloakSyncException(); 
         }
