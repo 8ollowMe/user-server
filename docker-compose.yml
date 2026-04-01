@@ -1,6 +1,6 @@
 services:
   postgres-keycloak:
-    image: postgres:18
+    image: postgres:17
     container_name: postgres-keycloak
     restart: unless-stopped
     environment:
