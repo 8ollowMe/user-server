@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.dto.UserInternalResponseDto;
-import com.followme.userserver.application.service.UserService;
+import com.followme.userserver.application.service.InternalUserQueryService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,31 +22,31 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/internal/v1/users")
 public class InternalUserController {
 
-    private final UserService userService;
+    private final InternalUserQueryService internalUserQueryService;
 
 
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserInternal(@PathVariable UUID userId) {
-        UserInternalResponseDto response = userService.getUserInternal(userId);
+        UserInternalResponseDto response = internalUserQueryService.getUserInternal(userId);
         return ApiResponse.ok(response);
     }
 
 
     @PostMapping("/list")
     public ResponseEntity<ApiResponse> getUsersInternal(@RequestBody List<UUID> userIds) {
-        List<UserInternalResponseDto> responseList = userService.getUsersInternal(userIds);
+        List<UserInternalResponseDto> responseList = internalUserQueryService.getUsersInternal(userIds);
         return ApiResponse.ok(responseList);
     }
     
     @GetMapping("/{userId}/slack-id")
     public ResponseEntity<ApiResponse> getUserSlackId(@PathVariable UUID userId) {
-        String slackId = userService.getUserSlackId(userId);
+        String slackId = internalUserQueryService.getUserSlackId(userId);
         return ApiResponse.ok(slackId);
     }
 
     @GetMapping("/hub/{hubId}/managers")
     public ResponseEntity<ApiResponse> getManagersByHub(@PathVariable UUID hubId) {
-        List<UserInternalResponseDto> responseList = userService.getManagersByHub(hubId);
+        List<UserInternalResponseDto> responseList = internalUserQueryService.getManagersByHub(hubId);
         return ApiResponse.ok(responseList);
     }
 }
