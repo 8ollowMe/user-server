@@ -34,8 +34,12 @@ public class UserResponse {
         private UUID userId;
         private String username;
         private String name;
-        private String role;
+        private String address;
+        private String phone;
         private String slackId;
+        private UserRole role;
+        private UserStatus status;
         private UUID hubId;
+        private UUID vendorId;
     }
 }
