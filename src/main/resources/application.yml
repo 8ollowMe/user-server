@@ -24,5 +24,13 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # 여기를 9090으로 변경했습니다!
           issuer-uri: http://localhost:9090/realms/user
+
+keycloak:
+  server-url: http://localhost:9090
+  realm: user
+  admin:
+    realm: master
+    client-id: admin-cli
+    username: admin
+    password: admin

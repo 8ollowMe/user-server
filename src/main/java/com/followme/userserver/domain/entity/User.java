@@ -1,8 +1,7 @@
 package com.followme.userserver.domain.entity;
 
 
-import com.followMe.common.entity.BaseAudit; 
-
+import com.followMe.common.entity.BaseAudit;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import jakarta.persistence.*;
@@ -63,4 +62,5 @@ public class User extends BaseAudit {
         this.status = UserStatus.DELETED;
         super.softDelete(deletedByUserId); 
     }
+
 }

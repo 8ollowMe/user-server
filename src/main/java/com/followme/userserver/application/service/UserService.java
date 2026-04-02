@@ -1,11 +1,22 @@
 package com.followme.userserver.application.service;
 
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
+import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
-import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
-import com.followme.userserver.exception.UserErrorCode;
+// 💡 새롭게 만든 예외 클래스들을 import 합니다.
+import com.followme.userserver.exception.DuplicateUsernameException;
+import com.followme.userserver.exception.KeycloakSyncException;
+
+import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,29 +25,48 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final Keycloak keycloak;
+    private final UserMapper userMapper;
 
+    @Value("${keycloak.realm}")
+    private String realm;
+    
     @Transactional
     public void registerUser(UserRegisterRequestDto request) {
         
         // 1. 아이디 중복 검증 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw UserErrorCode.DUPLICATE_USERNAME.toException(); 
+            throw new DuplicateUsernameException();
         }
 
-        // 2. DTO 데이터를 바탕으로 엔티티 조립
-        User newUser = User.builder()
-                .username(request.getUsername())
-                .name(request.getName())
-                .address(request.getAddress())
-                .phone(request.getPhone())
-                .slackId(request.getSlackId())
-                .role(request.getRole())
-                .status(UserStatus.PENDING)
-                .hubId(request.getHubId())
-                .vendorId(request.getVendorId())
-                .build();
+        // 2-1. Keycloak에 보낼 유저 정보
+        UserRepresentation kcUser = new UserRepresentation();
+        kcUser.setUsername(request.getUsername());
+        kcUser.setEnabled(true);
+        kcUser.setLastName(request.getName());
+        kcUser.setFirstName("."); // Keycloak은 firstName이 필수라서 임의로 넣어줍니다.
+        kcUser.setEmail(request.getUsername() + "@test.com"); // Keycloak은 이메일이 필수라서 임의로 넣어줍니다.
 
-        // 3. DB에 저장
+        // 2-2. Keycloak에 보낼 비밀번호
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(request.getPassword());
+        credential.setTemporary(false);
+        
+        // 2-3. 유저 정보 안에 비밀번호 넣기
+        kcUser.setCredentials(List.of(credential));
+
+        // 2-4. 핫라인으로 API 전송
+        Response response = keycloak.realm(realm).users().create(kcUser);
+
+        if (response.getStatus() != 201) {
+            throw new KeycloakSyncException();
+        }
+
+        // 3. 로컬 DB용 엔티티
+        User newUser = userMapper.toEntity(request);
+
+        // 4. DB에 저장
         userRepository.save(newUser);
     }
 }
