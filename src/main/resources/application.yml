@@ -26,6 +26,8 @@ spring:
         jwt:
           issuer-uri: http://localhost:9090/realms/user
 
+  jackson:
+    default-property-inclusion: non_null
 keycloak:
   server-url: http://localhost:9090
   realm: user
