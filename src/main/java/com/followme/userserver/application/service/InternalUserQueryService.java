@@ -56,19 +56,20 @@ public class InternalUserQueryService {
     public List<UserResponse.Internal> getDeliveryManagers(UUID nodeId, String type) {
         List<User> deliveryUsers;
 
-        if ("HUB".equalsIgnoreCase(type)) {
+        if ("VENDOR".equalsIgnoreCase(type)) {
+
             deliveryUsers = userRepository.findAllByHubIdAndRoleAndStatusOrderBySequenceAsc(
                     nodeId, UserRole.DELIVERY, UserStatus.APPROVED);
-        } else if ("VENDOR".equalsIgnoreCase(type)) {
-            deliveryUsers = userRepository.findAllByVendorIdAndRoleAndStatusOrderBySequenceAsc(
-                    nodeId, UserRole.DELIVERY, UserStatus.APPROVED);
+        } else if ("HUB".equalsIgnoreCase(type)) {
+
+            deliveryUsers = userRepository.findAllByHubIdIsNullAndRoleAndStatusOrderBySequenceAsc(
+                    UserRole.DELIVERY, UserStatus.APPROVED);
         } else {
-            throw new IllegalArgumentException("지원하지 않는 NodeType 입니다: " + type);
+            throw new IllegalArgumentException("Unsupported NodeType: " + type);
         }
 
         return deliveryUsers.stream()
                 .map(userMapper::toInternalResponseDto)
                 .toList();
     }
-    
 }

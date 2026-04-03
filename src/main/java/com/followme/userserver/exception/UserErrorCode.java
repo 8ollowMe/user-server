@@ -15,7 +15,7 @@ public enum UserErrorCode implements ErrorCode {
     INVALID_PASSWORD("U003", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED), // 401 Unauthorized
     KEYCLOAK_SYNC_FAILED("U004", "인증 서버에 유저를 생성하지 못했습니다.", HttpStatus.INTERNAL_SERVER_ERROR), // 500 Internal Server Error
 
-    INVALID_DELIVERY_ASSOCIATION("U005", "배송 기사는 허브 또는 업체 중 단 하나의 소속만 지정되어야 합니다.", HttpStatus.BAD_REQUEST); // 400 Bad Request
+    INVALID_DELIVERY_ASSOCIATION("U005", "배송 기사는 특정 허브 소속이거나 전체 소속이어야 하며, 업체에 직접 소속될 수 없습니다.", HttpStatus.BAD_REQUEST); // 400 Bad Request
 
     private final String code;
     private final String message;
