@@ -34,8 +34,11 @@ public class SecurityConfig {
 
                 .requestMatchers("/error").permitAll() // Spring Boot 기본 에러 페이지는 인증 없이 접근 가능하도록 허용
                 
-                // [그룹 1] Public: 로그인 없이 접근 가능
+                // [그룹 1] Public: 로그인 없이 접근 가능 (Gateway와 맞게 연동)
+                .requestMatchers("/api/v1/auth/**", "/api/v1/public/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
+
+                .requestMatchers("/register").permitAll() // 회원가입 페이지는 인증 없이 접근 가능하도록 허용
 
                 // [그룹 2] Internal: 다른 마이크로서비스 서버 간 내부 호출용
                 .requestMatchers("/internal/v1/users/**").permitAll()
