@@ -41,5 +41,7 @@ public class UserResponse {
         private UserStatus status;
         private UUID hubId;
         private UUID vendorId;
+        private Long sequence;
     }
+    
 }

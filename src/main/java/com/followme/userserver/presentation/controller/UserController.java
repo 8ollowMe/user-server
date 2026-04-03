@@ -100,20 +100,4 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
-    @GetMapping("/me/test")
-    public ResponseEntity<String> getMyInfoTest(
-            Principal principal, 
-            Authentication authentication) {
-        
-        // 1. User-Id 꺼내기 (필터에서 첫 번째 파라미터로 넣었던 값)
-        String userId = principal.getName();
-        
-        // 2. X-Role 꺼내기 (필터에서 Authority로 넣었던 값)
-        String role = authentication.getAuthorities().toString();
-
-        // 3. 화면에 잘 나오는지 조합해서 응답해보기
-        String result = String.format("🎉 인증 성공! \n내 아이디(UUID): %s \n내 권한(Role): %s", userId, role);
-        
-        return ResponseEntity.ok(result);
-    }
 }

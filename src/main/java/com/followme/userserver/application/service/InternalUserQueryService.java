@@ -50,4 +50,22 @@ public class InternalUserQueryService {
                 .map(userMapper::toInternalResponseDto)
                 .toList();
     }
+    
+    @Transactional(readOnly = true)
+    public List<UserResponse.Internal> getDeliveryManagers(UUID nodeId, String type) {
+        List<User> deliveryUsers;
+
+        if ("HUB".equalsIgnoreCase(type)) {
+            deliveryUsers = userRepository.findAllByHubIdAndRoleOrderBySequenceAsc(nodeId, UserRole.DELIVERY);
+        } else if ("VENDOR".equalsIgnoreCase(type)) {
+            deliveryUsers = userRepository.findAllByVendorIdAndRoleOrderBySequenceAsc(nodeId, UserRole.DELIVERY);
+        } else {
+            throw new IllegalArgumentException("Unsupported NodeType: " + type);
+        }
+
+        return deliveryUsers.stream()
+                .map(userMapper::toInternalResponseDto)
+                .toList();
+    }
+    
 }

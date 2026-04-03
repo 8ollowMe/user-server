@@ -7,9 +7,11 @@ import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.application.port.AuthPort;
 import com.followme.userserver.domain.entity.User;
+import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.DuplicateUsernameException;
+import com.followme.userserver.exception.InvalidDeliveryAssociationException;
 import com.followme.userserver.exception.KeycloakSyncException;
 import com.followme.userserver.exception.UserNotFoundException;
 
@@ -43,6 +45,16 @@ public class UserCommandService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateUsernameException();
         }
+
+        if (request.getRole() == UserRole.DELIVERY) {
+            boolean hasHub = request.getHubId() != null;
+            boolean hasVendor = request.getVendorId() != null;
+
+            if ((!hasHub && !hasVendor) || (hasHub && hasVendor)) {
+                throw new InvalidDeliveryAssociationException();
+            }
+        }
+
 
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
@@ -107,13 +119,35 @@ public class UserCommandService {
             user.approve();
             authPort.syncKeycloakUserStatus(userId, true);
             authPort.assignRealmRole(userId, user.getRole().name());
+
+            // [Added] Sequence allocation for delivery drivers upon approval
+            if (user.getRole() == UserRole.DELIVERY) {
+                Long currentMaxSequence = 0L;
+                
+                // Determine the correct queue based on association
+                if (user.getHubId() != null) {
+                    currentMaxSequence = userRepository.findMaxSequenceByHubIdAndRole(user.getHubId(), UserRole.DELIVERY);
+                } else if (user.getVendorId() != null) {
+                    currentMaxSequence = userRepository.findMaxSequenceByVendorIdAndRole(user.getVendorId(), UserRole.DELIVERY);
+                }
+                
+                // Assign the next available sequence (back of the line)
+                user.updateSequence(currentMaxSequence + 1);
+            }
+
         } else if (request.getStatus() == UserStatus.REJECTED) {
             user.reject();
             authPort.syncKeycloakUserStatus(userId, false);
+            
+            // [Added] Ensure sequence is cleared if a user is rejected
+            user.updateSequence(null);
+
         } else {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
 
         return userMapper.toResponseDto(user);
     }
+
+    
 }
