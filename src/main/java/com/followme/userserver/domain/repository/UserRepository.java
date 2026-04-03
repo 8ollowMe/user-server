@@ -2,6 +2,7 @@ package com.followme.userserver.domain.repository;
 
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserRole;
+import com.followme.userserver.domain.enums.UserStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,8 +20,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     List<User> findAllByHubIdAndRole(UUID hubId, UserRole role);
 
-    List<User> findAllByHubIdAndRoleOrderBySequenceAsc(UUID hubId, UserRole role);
-    List<User> findAllByVendorIdAndRoleOrderBySequenceAsc(UUID vendorId, UserRole role);
+
+    List<User> findAllByHubIdAndRoleAndStatusOrderBySequenceAsc(
+            UUID hubId, UserRole role, UserStatus status);
+
+    List<User> findAllByVendorIdAndRoleAndStatusOrderBySequenceAsc(
+            UUID vendorId, UserRole role, UserStatus status);
 
     @Query("SELECT COALESCE(MAX(u.sequence), 0L) FROM User u WHERE u.hubId = :hubId AND u.role = :role")
     Long findMaxSequenceByHubIdAndRole(@Param("hubId") UUID hubId, @Param("role") UserRole role);

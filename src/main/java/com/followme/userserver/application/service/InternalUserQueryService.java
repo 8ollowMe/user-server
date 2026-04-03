@@ -4,6 +4,7 @@ import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserRole;
+import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.UserNotFoundException;
 
@@ -56,11 +57,13 @@ public class InternalUserQueryService {
         List<User> deliveryUsers;
 
         if ("HUB".equalsIgnoreCase(type)) {
-            deliveryUsers = userRepository.findAllByHubIdAndRoleOrderBySequenceAsc(nodeId, UserRole.DELIVERY);
+            deliveryUsers = userRepository.findAllByHubIdAndRoleAndStatusOrderBySequenceAsc(
+                    nodeId, UserRole.DELIVERY, UserStatus.APPROVED);
         } else if ("VENDOR".equalsIgnoreCase(type)) {
-            deliveryUsers = userRepository.findAllByVendorIdAndRoleOrderBySequenceAsc(nodeId, UserRole.DELIVERY);
+            deliveryUsers = userRepository.findAllByVendorIdAndRoleAndStatusOrderBySequenceAsc(
+                    nodeId, UserRole.DELIVERY, UserStatus.APPROVED);
         } else {
-            throw new IllegalArgumentException("Unsupported NodeType: " + type);
+            throw new IllegalArgumentException("지원하지 않는 NodeType 입니다: " + type);
         }
 
         return deliveryUsers.stream()

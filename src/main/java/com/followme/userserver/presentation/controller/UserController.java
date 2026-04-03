@@ -11,12 +11,10 @@ import com.followme.userserver.application.service.UserQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.security.Principal;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
