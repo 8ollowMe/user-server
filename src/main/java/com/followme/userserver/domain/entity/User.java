@@ -10,6 +10,7 @@ import lombok.*;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.domain.Persistable;
 
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Persistable;
 @AllArgsConstructor
 @Builder
 @SQLRestriction("status != 'DELETED'")
+@DynamicUpdate
 public class User extends BaseAudit implements Persistable<UUID> {
 
     @Id
