@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.dto.UserResponse;
+import com.followme.userserver.application.service.InternalUserCommandService;
 import com.followme.userserver.application.service.InternalUserQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class InternalUserController {
 
     private final InternalUserQueryService internalUserQueryService;
+    private final InternalUserCommandService internalUserCommandService;
 
 
     @GetMapping("/{userId}")
@@ -59,5 +62,12 @@ public class InternalUserController {
         List<UserResponse.Internal> responseList = internalUserQueryService.getDeliveryManagers(hubId, type);
         
         return ApiResponse.ok(responseList);
+    }
+
+    @PatchMapping("/{userId}/sequence/last")
+    public ResponseEntity<ApiResponse> updateDeliverySequence(@PathVariable UUID userId) {
+        internalUserCommandService.updateDeliverySequenceToLast(userId);
+        
+        return ApiResponse.ok("success");
     }
 }
