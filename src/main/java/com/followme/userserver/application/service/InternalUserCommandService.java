@@ -3,7 +3,6 @@ package com.followme.userserver.application.service;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.repository.UserRepository;
-import com.followme.userserver.exception.InvalidDeliveryAssociationException;
 import com.followme.userserver.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
