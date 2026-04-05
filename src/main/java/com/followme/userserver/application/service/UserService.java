@@ -1,15 +1,20 @@
 package com.followme.userserver.application.service;
 
+import com.followMe.common.exception.BusinessException;
+import com.followMe.common.exception.CommonErrorCode;
+import com.followMe.common.pagination.PageResponse;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
 import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
+import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
-// 💡 새롭게 만든 예외 클래스들을 import 합니다.
 import com.followme.userserver.exception.DuplicateUsernameException;
 import com.followme.userserver.exception.KeycloakSyncException;
 import com.followme.userserver.exception.UserNotFoundException;
+import com.followme.userserver.infrastructure.keycloak.KeycloakAdapter;
 
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,8 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +39,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final Keycloak keycloak;
     private final UserMapper userMapper;
+    private final KeycloakAdapter keycloakAdapter;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -48,9 +56,12 @@ public class UserService {
         // 2-1. Keycloak에 보낼 유저 정보
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
-        kcUser.setEnabled(true);
+
+        kcUser.setEnabled(false); // 가입 시에는 비활성화 상태로 시작 (관리자 승인 후 활성화)
+
         kcUser.setLastName(request.getName());
         kcUser.setFirstName("."); // Keycloak은 firstName이 필수라서 임의로 넣어줍니다.
+
         kcUser.setEmail(request.getUsername() + "@test.com"); // Keycloak은 이메일이 필수라서 임의로 넣어줍니다.
 
         // 2-2. Keycloak에 보낼 비밀번호
@@ -131,12 +142,62 @@ public class UserService {
                 // 3-3. Keycloak 서버에 변경된 정보 업데이트 요청
                 keycloak.realm(realm).users().get(kcUser.getId()).update(kcUser);
             } else {
-                // Keycloak에 유저가 없는 극히 드문 예외 상황 처리
                 throw new KeycloakSyncException(); 
             }
         } catch (Exception e) {
-            // Keycloak 서버 통신 장애 등 예외 발생 시 트랜잭션 롤백을 위해 예외 던지기
             throw new KeycloakSyncException(); 
         }
     }
+
+    @Transactional
+    public UserResponseDto updateUserStatus(UUID userId, UserStatusUpdateRequestDto request) {
+        // 1. 대상 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 비즈니스 로직 및 Keycloak 상태 동기화
+        if (request.getStatus() == UserStatus.APPROVED) {
+            user.approve(); // DB 상태 APPROVED로 변경
+            
+            // 💡 Keycloak 계정 활성화 (로그인 가능 상태로)
+            keycloakAdapter.syncKeycloakUserStatus(userId, true);
+            
+            // 💡 🌟 핵심: DB에 저장된 유저의 권한을 Keycloak에도 쏴줍니다!
+            // (user.getRole().name() 은 DB에 저장된 "MASTER", "VENDOR" 등의 문자열을 반환한다고 가정)
+            keycloakAdapter.assignRealmRole(userId, user.getRole().name());
+            
+        } else if (request.getStatus() == UserStatus.REJECTED) {
+            user.reject(); // DB 상태 REJECTED로 변경
+            
+            // Keycloak 계정 비활성화
+            keycloakAdapter.syncKeycloakUserStatus(userId, false);
+            
+        } else {
+            throw new BusinessException(CommonErrorCode.INVALID_INPUT);
+        }
+
+        return userMapper.toResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDto getUserById(UUID userId) {
+        // 1. UUID를 기반으로 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. DTO로 변환하여 반환
+        return userMapper.toResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponseDto> getAllUsers(Pageable pageable) {
+        
+        // 1. Pageable 객체를 사용하여 DB에서 페이징된 엔티티 목록 조회
+        // @SQLRestriction("status != 'DELETED'")가 있으므로 삭제된 유저는 자동 제외됨
+        Page<User> userPage = userRepository.findAll(pageable);
+
+        // 2. common-lib의 팩토리 메서드를 사용하여 Entity Page를 DTO PageResponse로 변환
+        return PageResponse.of(userPage, userMapper::toResponseDto);
+    }
+    
 }
