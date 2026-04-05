@@ -7,6 +7,7 @@ import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
 import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.mapper.UserMapper;
+import com.followme.userserver.application.port.AuthPort;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
@@ -36,6 +37,7 @@ public class UserCommandService {
     private final UserMapper userMapper;
     private final Keycloak keycloak;
     private final KeycloakAdapter keycloakAdapter;
+    private final AuthPort authPort;
 
     @Value("${keycloak.realm}")
     private String realm;
@@ -113,11 +115,11 @@ public class UserCommandService {
 
         if (request.getStatus() == UserStatus.APPROVED) {
             user.approve();
-            keycloakAdapter.syncKeycloakUserStatus(userId, true);
-            keycloakAdapter.assignRealmRole(userId, user.getRole().name());
+            authPort.syncKeycloakUserStatus(userId, true);
+            authPort.assignRealmRole(userId, user.getRole().name());
         } else if (request.getStatus() == UserStatus.REJECTED) {
             user.reject();
-            keycloakAdapter.syncKeycloakUserStatus(userId, false);
+            authPort.syncKeycloakUserStatus(userId, false);
         } else {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }

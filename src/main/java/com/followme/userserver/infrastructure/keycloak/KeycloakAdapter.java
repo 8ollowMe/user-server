@@ -13,12 +13,13 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.followme.userserver.application.port.AuthPort;
 import com.followme.userserver.exception.KeycloakSyncException;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class KeycloakAdapter {
+public class KeycloakAdapter implements AuthPort {
 
     private final Keycloak keycloak;
 
@@ -26,7 +27,7 @@ public class KeycloakAdapter {
     private String realm;
 
 
-    // Keycloak 서버의 유저 활성화/비활성화 상태를 동기화합니다.
+    @Override
     public void syncKeycloakUserStatus(UUID keycloakUserId, boolean isEnabled) {
         try {
             UserResource userResource = keycloak.realm(realm).users().get(keycloakUserId.toString());
@@ -43,7 +44,7 @@ public class KeycloakAdapter {
     }
 
     
-    // Keycloak 유저에게 특정 Realm Role(직급)을 부여합니다.
+    @Override
     public void assignRealmRole(UUID keycloakUserId, String roleName) {
         try {
             RealmResource realmResource = keycloak.realm(realm);
