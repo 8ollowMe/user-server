@@ -11,10 +11,12 @@ import com.followme.userserver.application.service.UserQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -42,27 +44,27 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser String username) {
+    public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser UUID userId) {
         
-        UserResponse.Info responseDto = userQueryService.getUserProfile(username);
+        UserResponse.Info responseDto = userQueryService.getUserProfile(userId);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse> updateMyProfile(
-            @CurrentUser String username,
+            @CurrentUser UUID userId,
             @RequestBody UserRequest.UpdateProfile request) {
 
-        UserResponse.Info responseDto = userCommandService.updateUserProfile(username, request);
+        UserResponse.Info responseDto = userCommandService.updateUserProfile(userId, request);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse> deactivateMyAccount(@CurrentUser String username) {
+    public ResponseEntity<ApiResponse> deactivateMyAccount(@CurrentUser UUID userId) {
         
-        userCommandService.deactivateMyAccount(username);
+        userCommandService.deactivateMyAccount(userId);
         
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -97,4 +99,5 @@ public class UserController {
 
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
+
 }

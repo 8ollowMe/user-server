@@ -7,12 +7,13 @@ import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.application.port.AuthPort;
 import com.followme.userserver.domain.entity.User;
+import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.DuplicateUsernameException;
+import com.followme.userserver.exception.InvalidDeliveryAssociationException;
 import com.followme.userserver.exception.KeycloakSyncException;
 import com.followme.userserver.exception.UserNotFoundException;
-import com.followme.userserver.infrastructure.keycloak.KeycloakAdapter;
 
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,16 @@ public class UserCommandService {
             throw new DuplicateUsernameException();
         }
 
+        if (request.getRole() == UserRole.DELIVERY) {
+            boolean hasHub = request.getHubId() != null;
+            boolean hasVendor = request.getVendorId() != null;
+
+            if ((!hasHub && !hasVendor) || (hasHub && hasVendor)) {
+                throw new InvalidDeliveryAssociationException();
+            }
+        }
+
+
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
         kcUser.setEnabled(false);
@@ -75,31 +86,25 @@ public class UserCommandService {
     }
 
     @Transactional
-    public UserResponse.Info updateUserProfile(String username, UserRequest.UpdateProfile request) {
-        User user = userRepository.findByUsername(username)
+    public UserResponse.Info updateUserProfile(UUID userId, UserRequest.UpdateProfile request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         user.updateProfile(request);
         return userMapper.toResponseDto(user);
     }
 
     @Transactional
-    public void deactivateMyAccount(String username) {
-        User user = userRepository.findByUsername(username)
+    public void deactivateMyAccount(UUID userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         String currentTokenUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         user.deactivateAccount(UUID.fromString(currentTokenUserId));
         
         try {
-            List<UserRepresentation> kcUsers = keycloak.realm(realm).users().search(username);
-            
-            if (kcUsers != null && !kcUsers.isEmpty()) {
-                UserRepresentation kcUser = kcUsers.get(0); 
-                kcUser.setEnabled(false); 
-                keycloak.realm(realm).users().get(kcUser.getId()).update(kcUser);
-            } else {
-                throw new KeycloakSyncException(); 
-            }
+            UserRepresentation kcUser = keycloak.realm(realm).users().get(userId.toString()).toRepresentation();
+            kcUser.setEnabled(false);
+            keycloak.realm(realm).users().get(userId.toString()).update(kcUser);
         } catch (Exception e) {
             throw new KeycloakSyncException(); 
         }
@@ -114,13 +119,35 @@ public class UserCommandService {
             user.approve();
             authPort.syncKeycloakUserStatus(userId, true);
             authPort.assignRealmRole(userId, user.getRole().name());
+
+            // [Added] Sequence allocation for delivery drivers upon approval
+            if (user.getRole() == UserRole.DELIVERY) {
+                Long currentMaxSequence = 0L;
+                
+                // Determine the correct queue based on association
+                if (user.getHubId() != null) {
+                    currentMaxSequence = userRepository.findMaxSequenceByHubIdAndRole(user.getHubId(), UserRole.DELIVERY);
+                } else if (user.getVendorId() != null) {
+                    currentMaxSequence = userRepository.findMaxSequenceByVendorIdAndRole(user.getVendorId(), UserRole.DELIVERY);
+                }
+                
+                // Assign the next available sequence (back of the line)
+                user.updateSequence(currentMaxSequence + 1);
+            }
+
         } else if (request.getStatus() == UserStatus.REJECTED) {
             user.reject();
             authPort.syncKeycloakUserStatus(userId, false);
+            
+            // [Added] Ensure sequence is cleared if a user is rejected
+            user.updateSequence(null);
+
         } else {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
 
         return userMapper.toResponseDto(user);
     }
+
+    
 }

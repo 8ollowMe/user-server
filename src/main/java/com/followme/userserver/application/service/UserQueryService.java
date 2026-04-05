@@ -23,19 +23,19 @@ public class UserQueryService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserResponseDto getUserProfile(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(UserNotFoundException::new);
-        return userMapper.toResponseDto(user);
-    }
-
-    public UserResponseDto getUserById(UUID userId) {
+    public UserResponse.Info getUserProfile(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         return userMapper.toResponseDto(user);
     }
 
-    public PageResponse<UserResponseDto> getAllUsers(Pageable pageable) {
+    public UserResponse.Info getUserById(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        return userMapper.toResponseDto(user);
+    }
+
+    public PageResponse<UserResponse.Info> getAllUsers(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
         return PageResponse.of(userPage, userMapper::toResponseDto);
     }

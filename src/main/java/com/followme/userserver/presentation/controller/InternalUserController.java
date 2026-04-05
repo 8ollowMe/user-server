@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.followMe.common.response.ApiResponse;
@@ -47,6 +48,16 @@ public class InternalUserController {
     @GetMapping("/hub/{hubId}/managers")
     public ResponseEntity<ApiResponse> getManagersByHub(@PathVariable UUID hubId) {
         List<UserResponse.Internal> responseList = internalUserQueryService.getManagersByHub(hubId);
+        return ApiResponse.ok(responseList);
+    }
+
+    @GetMapping("/deliveries")
+    public ResponseEntity<ApiResponse> getDeliveryManagers(
+            @RequestParam("hubId") UUID hubId, // 명세서 스펙 상 이름은 hubId지만 vendorId 역할도 겸함
+            @RequestParam("type") String type) {
+        
+        List<UserResponse.Internal> responseList = internalUserQueryService.getDeliveryManagers(hubId, type);
+        
         return ApiResponse.ok(responseList);
     }
 }

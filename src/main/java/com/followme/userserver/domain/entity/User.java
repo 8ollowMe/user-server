@@ -55,6 +55,9 @@ public class User extends BaseAudit implements Persistable<UUID> {
     @Column(name = "vendor_id")
     private UUID vendorId;
 
+    @Column(name = "sequence")
+    private Long sequence;
+
     @Transient
     @Builder.Default
     private boolean isNew = true;
@@ -107,6 +110,10 @@ public class User extends BaseAudit implements Persistable<UUID> {
         this.status = UserStatus.DELETED;
 
         this.softDelete(deleterUsername);
+    }
+
+    public void updateSequence(Long newSequence) {
+        this.sequence = newSequence;
     }
 
 }
