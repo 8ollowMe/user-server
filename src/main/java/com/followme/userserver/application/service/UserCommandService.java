@@ -46,15 +46,12 @@ public class UserCommandService {
             throw new DuplicateUsernameException();
         }
 
+        // 배송 기사(DELIVERY)는 VendorId를 가질 수 없음을 검증
         if (request.getRole() == UserRole.DELIVERY) {
-            boolean hasHub = request.getHubId() != null;
-            boolean hasVendor = request.getVendorId() != null;
-
-            if ((!hasHub && !hasVendor) || (hasHub && hasVendor)) {
+            if (request.getVendorId() != null) {
                 throw new InvalidDeliveryAssociationException();
             }
         }
-
 
         UserRepresentation kcUser = new UserRepresentation();
         kcUser.setUsername(request.getUsername());
@@ -120,18 +117,18 @@ public class UserCommandService {
             authPort.syncKeycloakUserStatus(userId, true);
             authPort.assignRealmRole(userId, user.getRole().name());
 
-            // [Added] Sequence allocation for delivery drivers upon approval
+
             if (user.getRole() == UserRole.DELIVERY) {
                 Long currentMaxSequence = 0L;
                 
-                // Determine the correct queue based on association
                 if (user.getHubId() != null) {
+
                     currentMaxSequence = userRepository.findMaxSequenceByHubIdAndRole(user.getHubId(), UserRole.DELIVERY);
-                } else if (user.getVendorId() != null) {
-                    currentMaxSequence = userRepository.findMaxSequenceByVendorIdAndRole(user.getVendorId(), UserRole.DELIVERY);
+                } else {
+
+                    currentMaxSequence = userRepository.findMaxSequenceGlobalByRole(UserRole.DELIVERY);
                 }
                 
-                // Assign the next available sequence (back of the line)
                 user.updateSequence(currentMaxSequence + 1);
             }
 
@@ -139,7 +136,6 @@ public class UserCommandService {
             user.reject();
             authPort.syncKeycloakUserStatus(userId, false);
             
-            // [Added] Ensure sequence is cleared if a user is rejected
             user.updateSequence(null);
 
         } else {
@@ -148,6 +144,4 @@ public class UserCommandService {
 
         return userMapper.toResponseDto(user);
     }
-
-    
 }

@@ -4,6 +4,7 @@ import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserRole;
+import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.UserNotFoundException;
 
@@ -55,10 +56,14 @@ public class InternalUserQueryService {
     public List<UserResponse.Internal> getDeliveryManagers(UUID nodeId, String type) {
         List<User> deliveryUsers;
 
-        if ("HUB".equalsIgnoreCase(type)) {
-            deliveryUsers = userRepository.findAllByHubIdAndRoleOrderBySequenceAsc(nodeId, UserRole.DELIVERY);
-        } else if ("VENDOR".equalsIgnoreCase(type)) {
-            deliveryUsers = userRepository.findAllByVendorIdAndRoleOrderBySequenceAsc(nodeId, UserRole.DELIVERY);
+        if ("VENDOR".equalsIgnoreCase(type)) {
+
+            deliveryUsers = userRepository.findAllByHubIdAndRoleAndStatusOrderBySequenceAsc(
+                    nodeId, UserRole.DELIVERY, UserStatus.APPROVED);
+        } else if ("HUB".equalsIgnoreCase(type)) {
+
+            deliveryUsers = userRepository.findAllByHubIdIsNullAndRoleAndStatusOrderBySequenceAsc(
+                    UserRole.DELIVERY, UserStatus.APPROVED);
         } else {
             throw new IllegalArgumentException("Unsupported NodeType: " + type);
         }
@@ -67,5 +72,4 @@ public class InternalUserQueryService {
                 .map(userMapper::toInternalResponseDto)
                 .toList();
     }
-    
 }
