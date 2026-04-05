@@ -3,12 +3,14 @@ package com.followme.userserver.application.service;
 import com.followMe.common.exception.BusinessException;
 import com.followMe.common.exception.CommonErrorCode;
 import com.followMe.common.pagination.PageResponse;
+import com.followme.userserver.application.dto.UserInternalResponseDto;
 import com.followme.userserver.application.dto.UserRegisterRequestDto;
 import com.followme.userserver.application.dto.UserResponseDto;
 import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
 import com.followme.userserver.application.dto.UserUpdateRequestDto;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
+import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.DuplicateUsernameException;
@@ -199,5 +201,45 @@ public class UserService {
         // 2. common-lib의 팩토리 메서드를 사용하여 Entity Page를 DTO PageResponse로 변환
         return PageResponse.of(userPage, userMapper::toResponseDto);
     }
+
+
     
+
+    // Internal Service 
+    @Transactional(readOnly = true)
+    public UserInternalResponseDto getUserInternal(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        return userMapper.toInternalResponseDto(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserInternalResponseDto> getUsersInternal(List<UUID> userIds) {
+        // 1. 유효한 ID 리스트로 한꺼번에 조회
+        List<User> users = userRepository.findAllById(userIds);
+        
+        // 2. 리스트 변환
+        return users.stream()
+                .map(userMapper::toInternalResponseDto)
+                .toList();
+    }
+    
+
+    @Transactional(readOnly = true)
+    public String getUserSlackId(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        return user.getSlackId();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserInternalResponseDto> getManagersByHub(UUID hubId) {
+        // 1. 해당 허브(hubId)에 소속된 관리자(UserRole.HUB) 목록 조회
+        List<User> managers = userRepository.findAllByHubIdAndRole(hubId, UserRole.HUB);
+
+        // 2. 내부 통신용 DTO로 변환하여 반환
+        return managers.stream()
+                .map(userMapper::toInternalResponseDto)
+                .toList();
+    }
 }
