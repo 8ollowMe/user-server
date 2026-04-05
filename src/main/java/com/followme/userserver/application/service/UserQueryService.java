@@ -17,27 +17,25 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserQueryService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    @Transactional(readOnly = true)
-    public UserResponse.Info getUserProfile(String username) {
+    public UserResponseDto getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
         return userMapper.toResponseDto(user);
     }
 
-    @Transactional(readOnly = true)
-    public UserResponse.Info getUserById(UUID userId) {
+    public UserResponseDto getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         return userMapper.toResponseDto(user);
     }
 
-    @Transactional(readOnly = true)
-    public PageResponse<UserResponse.Info> getAllUsers(Pageable pageable) {
+    public PageResponse<UserResponseDto> getAllUsers(Pageable pageable) {
         Page<User> userPage = userRepository.findAll(pageable);
         return PageResponse.of(userPage, userMapper::toResponseDto);
     }
