@@ -1,7 +1,7 @@
 package com.followme.userserver.application.service;
 
 import com.followMe.common.pagination.PageResponse;
-import com.followme.userserver.application.dto.UserResponseDto;
+import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.mapper.UserMapper;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.repository.UserRepository;

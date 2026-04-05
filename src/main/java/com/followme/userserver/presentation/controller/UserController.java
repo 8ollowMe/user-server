@@ -4,10 +4,8 @@ import com.followMe.common.pagination.PageRequest;
 import com.followMe.common.pagination.PageResponse;
 import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.annotation.CurrentUser;
-import com.followme.userserver.application.dto.UserRegisterRequestDto;
-import com.followme.userserver.application.dto.UserResponseDto;
-import com.followme.userserver.application.dto.UserStatusUpdateRequestDto;
-import com.followme.userserver.application.dto.UserUpdateRequestDto;
+import com.followme.userserver.application.dto.UserRequest;
+import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.service.UserCommandService;
 import com.followme.userserver.application.service.UserQueryService;
 import jakarta.validation.Valid;
@@ -36,7 +34,7 @@ public class UserController {
     private final UserQueryService userQueryService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody UserRegisterRequestDto request) {
+    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody UserRequest.Register request) {
         
         userCommandService.registerUser(request);
 
@@ -46,7 +44,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser String username) {
         
-        UserResponseDto responseDto = userQueryService.getUserProfile(username);
+        UserResponse.Info responseDto = userQueryService.getUserProfile(username);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
@@ -54,9 +52,9 @@ public class UserController {
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse> updateMyProfile(
             @CurrentUser String username,
-            @RequestBody UserUpdateRequestDto request) {
+            @RequestBody UserRequest.UpdateProfile request) {
 
-        UserResponseDto responseDto = userCommandService.updateUserProfile(username, request);
+        UserResponse.Info responseDto = userCommandService.updateUserProfile(username, request);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
@@ -72,9 +70,9 @@ public class UserController {
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse> updateUserStatus(
             @PathVariable UUID userId,
-            @RequestBody UserStatusUpdateRequestDto request) {
+            @RequestBody UserRequest.UpdateStatus request) {
         
-        UserResponseDto responseDto = userCommandService.updateUserStatus(userId, request);
+        UserResponse.Info responseDto = userCommandService.updateUserStatus(userId, request);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
@@ -82,7 +80,7 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable UUID userId) {
         
-        UserResponseDto responseDto = userQueryService.getUserById(userId);
+        UserResponse.Info responseDto = userQueryService.getUserById(userId);
         
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
@@ -95,7 +93,7 @@ public class UserController {
         // 1. common-lib의 PageRequest를 통해 검증된 Pageable 객체 생성 (10, 30, 50 사이즈 강제)
         Pageable pageable = PageRequest.of(page, size).toPageable();
 
-        PageResponse<UserResponseDto> responseDto = userQueryService.getAllUsers(pageable);
+        PageResponse<UserResponse.Info> responseDto = userQueryService.getAllUsers(pageable);
 
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
