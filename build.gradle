@@ -36,9 +36,11 @@ ext {
 }
 
 dependencies {
-	implementation 'com.followMe:common-lib:1.0.4' // 공통 라이브러리 의존성 추가
+	// 공통 라이브러리 의존성 추가
+	implementation 'com.followMe:common-lib:1.0.4' 
 
-	implementation 'org.keycloak:keycloak-admin-client:24.0.1' // Keycloak Admin Client 의존성 추가
+	// Keycloak Admin Client 의존성 추가
+	implementation 'org.keycloak:keycloak-admin-client:24.0.1' 
 
 	// MapStruct 핵심 라이브러리
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
@@ -46,6 +48,15 @@ dependencies {
     
     // Lombok과의 공존을 위한 바인딩 (필수)
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+	// 모니터링 및 메트릭 수집 (필수)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // 분산 추적 - Micrometer Tracing (Brave 브릿지 사용)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    
+    // Zipkin으로 트레이스 데이터를 전송하는 리포터
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
