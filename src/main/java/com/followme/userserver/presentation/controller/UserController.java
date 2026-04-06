@@ -1,6 +1,5 @@
 package com.followme.userserver.presentation.controller;
 
-import com.followMe.common.pagination.PageRequest;
 import com.followMe.common.pagination.PageResponse;
 import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.annotation.CurrentUser;
