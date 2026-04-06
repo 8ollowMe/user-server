@@ -1,32 +1,32 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.13'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'com.diffplug.spotless' version '6.25.0'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.13'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.followme'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
-	maven {
+    mavenCentral()
+    maven {
         url = uri("https://maven.pkg.github.com/8ollowMe/common-lib")
         credentials {
-            username = findProperty("gpr.user")
-            password = findProperty("gpr.key")
+            username = findProperty("gpr.user") ?: System.getenv("GPR_USER")
+            password = findProperty("gpr.key") ?: System.getenv("GPR_KEY")
         }
     }
 }
@@ -36,66 +36,61 @@ ext {
 }
 
 dependencies {
-	// 공통 라이브러리 의존성 추가
-	implementation 'com.followMe:common-lib:1.0.7' 
-
-	// Keycloak Admin Client 의존성 추가
-	implementation 'org.keycloak:keycloak-admin-client:24.0.1' 
-
-	// MapStruct 핵심 라이브러리
-    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-    
-    // Lombok과의 공존을 위한 바인딩 (필수)
-    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
-
-	// 모니터링 및 메트릭 수집 (필수)
+    // 1. Core Framework & Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     
-    // 분산 추적 - Micrometer Tracing (Brave 브릿지 사용)
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    
-    // Zipkin으로 트레이스 데이터를 전송하는 리포터
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    // 2. Data Access & Query Optimization
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+    implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
 
-	// OpenAPI 문서화 도구
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
-
-	// Kafka & Outbox 패턴 활성화를 위한 의존성
+    // 3. Cloud & Infrastructure (Eureka, Kafka)
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.kafka:spring-kafka'
-	
-	// QueryDSL 의존성 추가 (JPA용)
-	implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+    implementation 'com.followMe:common-lib:1.0.7' // 최신 버전 유지
+
+    // 4. Security & Identity Management
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.keycloak:keycloak-admin-client:24.0.1'
+
+    // 5. Observability (Tracing & Metrics)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
+
+    // 6. Code Generation - ⚠️ 실행 순서 엄격 준수 (Lombok -> Binding -> MapStruct -> QueryDSL)
+    
+    // Step 1: Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Step 2: MapStruct & Lombok Binding (Lombok 코드를 MapStruct가 인식하기 위함)
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    // Step 3: QueryDSL (Jakarta Namespace)
     annotationProcessor 'com.querydsl:querydsl-apt:5.1.0:jakarta'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // 7. Test Suite
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testAnnotationProcessor 'org.projectlombok:lombok' // 테스트 환경에서도 Lombok 코드 생성 보장
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
     imports {
-        // 이 블록이 누락된 라이브러리의 버전을 자동으로 주입합니다.
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
     }
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
-}
-
-// === QueryDSL 빌드 설정 ===
+// === QueryDSL QClass Build Configuration ===
 def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
 
 sourceSets {
@@ -104,8 +99,16 @@ sourceSets {
 
 tasks.withType(JavaCompile).configureEach {
     options.getGeneratedSourceOutputDirectory().set(querydslDir)
+    // MapStruct 옵션 추가: Spring 빈으로 자동 등록
+    options.compilerArgs += [
+        "-Amapstruct.defaultComponentModel=spring"
+    ]
 }
 
 clean {
     delete querydslDir
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
