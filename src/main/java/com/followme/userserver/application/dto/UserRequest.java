@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 
@@ -56,5 +57,13 @@ public class UserRequest {
     @Getter
     public static class UpdateStatus {
         private UserStatus status;
+    }
+
+    @Getter
+    @Setter
+    public static class SearchCondition {
+        private UserRole role;
+        private UserStatus status;
+        private String keyword;
     }
 }

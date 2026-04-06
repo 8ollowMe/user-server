@@ -46,7 +46,7 @@ public class InternalUserQueryService {
 
     @Transactional(readOnly = true)
     public List<UserResponse.Internal> getManagersByHub(UUID hubId) {
-        List<User> managers = userRepository.findAllByHubIdAndRole(hubId, UserRole.HUB);
+        List<User> managers = userRepository.findManagersByHubId(hubId);
         return managers.stream()
                 .map(userMapper::toInternalResponseDto)
                 .toList();
@@ -57,13 +57,9 @@ public class InternalUserQueryService {
         List<User> deliveryUsers;
 
         if ("VENDOR".equalsIgnoreCase(type)) {
-
-            deliveryUsers = userRepository.findAllByHubIdAndRoleAndStatusOrderBySequenceAsc(
-                    nodeId, UserRole.DELIVERY, UserStatus.APPROVED);
+            deliveryUsers = userRepository.findDeliveries(null, nodeId);
         } else if ("HUB".equalsIgnoreCase(type)) {
-
-            deliveryUsers = userRepository.findAllByHubIdIsNullAndRoleAndStatusOrderBySequenceAsc(
-                    UserRole.DELIVERY, UserStatus.APPROVED);
+            deliveryUsers = userRepository.findDeliveries(nodeId, null);
         } else {
             throw new IllegalArgumentException("Unsupported NodeType: " + type);
         }

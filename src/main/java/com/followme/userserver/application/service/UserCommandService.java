@@ -50,7 +50,6 @@ public class UserCommandService {
             throw new DuplicateUsernameException();
         }
 
-        // 배송 기사(DELIVERY)는 VendorId를 가질 수 없음을 검증
         if (request.getRole() == UserRole.DELIVERY) {
             if (request.getVendorId() != null) {
                 throw new InvalidDeliveryAssociationException();
@@ -146,27 +145,15 @@ public class UserCommandService {
             authPort.syncKeycloakUserStatus(userId, true);
             authPort.assignRealmRole(userId, user.getRole().name());
 
-
             if (user.getRole() == UserRole.DELIVERY) {
-                Long currentMaxSequence = 0L;
-                
-                if (user.getHubId() != null) {
-
-                    currentMaxSequence = userRepository.findMaxSequenceByHubIdAndRole(user.getHubId(), UserRole.DELIVERY);
-                } else {
-
-                    currentMaxSequence = userRepository.findMaxSequenceGlobalByRole(UserRole.DELIVERY);
-                }
-                
+                Long currentMaxSequence = userRepository.findMaxSequence(user.getHubId(), UserRole.DELIVERY);
                 user.updateSequence(currentMaxSequence + 1);
             }
 
         } else if (request.getStatus() == UserStatus.REJECTED) {
             user.reject();
             authPort.syncKeycloakUserStatus(userId, false);
-            
             user.updateSequence(null);
-
         } else {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
