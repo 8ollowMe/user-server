@@ -1,5 +1,6 @@
 package com.followme.userserver.application.service;
 
+import com.followMe.common.event.Events;
 import com.followMe.common.exception.BusinessException;
 import com.followMe.common.exception.CommonErrorCode;
 import com.followme.userserver.application.dto.UserRequest;
@@ -9,6 +10,9 @@ import com.followme.userserver.application.port.AuthPort;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserRole;
 import com.followme.userserver.domain.enums.UserStatus;
+import com.followme.userserver.domain.event.UserCreatedEvent;
+import com.followme.userserver.domain.event.UserDeactivatedEvent;
+import com.followme.userserver.domain.event.UserStatusUpdatedEvent;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.DuplicateUsernameException;
 import com.followme.userserver.exception.InvalidDeliveryAssociationException;
@@ -78,8 +82,12 @@ public class UserCommandService {
 
         User newUser = userMapper.toEntity(request);
         newUser.setId(UUID.fromString(keycloakUserId));
-
+        
         userRepository.save(newUser);
+
+        Events.trigger(
+            new UserCreatedEvent(newUser.getId(), newUser.getUsername(), newUser.getRole().name())
+        );
     }
 
     @Transactional
@@ -105,6 +113,27 @@ public class UserCommandService {
         } catch (Exception e) {
             throw new KeycloakSyncException(); 
         }
+
+        Events.trigger(new UserDeactivatedEvent(user.getId()));
+    }
+
+    @Transactional
+    public void deactivateAccount(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        String currentTokenUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        user.deactivateAccount(UUID.fromString(currentTokenUserId));
+        
+        try {
+            UserRepresentation kcUser = keycloak.realm(realm).users().get(userId.toString()).toRepresentation();
+            kcUser.setEnabled(false);
+            keycloak.realm(realm).users().get(userId.toString()).update(kcUser);
+        } catch (Exception e) {
+            throw new KeycloakSyncException(); 
+        }
+
+        Events.trigger(new UserDeactivatedEvent(user.getId()));
     }
 
     @Transactional
@@ -141,6 +170,10 @@ public class UserCommandService {
         } else {
             throw new BusinessException(CommonErrorCode.INVALID_INPUT);
         }
+
+        Events.trigger(
+            new UserStatusUpdatedEvent(user.getId(), request.getStatus().name())
+        );
 
         return userMapper.toResponseDto(user);
     }

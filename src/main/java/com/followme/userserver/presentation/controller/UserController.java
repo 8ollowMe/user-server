@@ -57,7 +57,13 @@ public class UserController {
         userCommandService.deactivateMyAccount(userId);
         return ApiResponse.ok();
     }
-    
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<ApiResponse> deactivateAccount(@PathVariable UUID userId) {
+        userCommandService.deactivateAccount(userId);
+        return ApiResponse.ok();
+    }
+
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse> updateUserStatus(
             @PathVariable UUID userId,

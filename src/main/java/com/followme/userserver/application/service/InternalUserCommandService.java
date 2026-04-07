@@ -1,7 +1,9 @@
 package com.followme.userserver.application.service;
 
+import com.followMe.common.event.Events;
 import com.followme.userserver.domain.entity.User;
 import com.followme.userserver.domain.enums.UserRole;
+import com.followme.userserver.domain.event.DeliverySequenceUpdatedEvent;
 import com.followme.userserver.domain.repository.UserRepository;
 import com.followme.userserver.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +36,9 @@ public class InternalUserCommandService {
         }
 
         user.updateSequence(currentMaxSequence + 1);
+
+        Events.trigger(
+            new DeliverySequenceUpdatedEvent(user.getId(), user.getSequence())
+        );
     }
 }
