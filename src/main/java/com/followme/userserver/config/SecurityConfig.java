@@ -55,8 +55,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/me").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/users/me").authenticated()
 
-                // [그룹 4] Admin: MASTER 권한 전용 사용자 관리
-                .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/status").hasRole("MASTER") // 승인/거절 처리
+                // [그룹 4] Admin: MASTER 및 HUB 권한 전용 사용자 관리
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/status").hasAnyRole("MASTER", "HUB") // 승인/거절 처리
                 .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("MASTER")            // 전체 사용자 목록 검색
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/*").hasRole("MASTER")          // 특정 사용자 상세 조회
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*").hasRole("MASTER")        // 사용자 정보 수정
