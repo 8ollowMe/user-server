@@ -37,9 +37,19 @@ services:
     networks:
       - keycloak-net
 
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin-server
+    restart: unless-stopped
+    ports:
+      - '9411:9411'
+    networks:
+      - keycloak-net
+
 volumes:
   postgres-keycloak-data:
   keycloak-data:
 
 networks:
   keycloak-net:
+  
