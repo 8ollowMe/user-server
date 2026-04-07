@@ -27,13 +27,7 @@ public class InternalUserCommandService {
             throw new IllegalArgumentException("User is not a delivery personnel.");
         }
 
-        Long currentMaxSequence = 0L;
-
-        if (user.getHubId() != null) {
-            currentMaxSequence = userRepository.findMaxSequenceByHubIdAndRole(user.getHubId(), UserRole.DELIVERY);
-        } else {
-            currentMaxSequence = userRepository.findMaxSequenceGlobalByRole(UserRole.DELIVERY);
-        }
+        Long currentMaxSequence = userRepository.findMaxSequence(user.getHubId(), UserRole.DELIVERY);
 
         user.updateSequence(currentMaxSequence + 1);
 
