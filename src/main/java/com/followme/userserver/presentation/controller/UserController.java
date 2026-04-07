@@ -1,6 +1,5 @@
 package com.followme.userserver.presentation.controller;
 
-import com.followMe.common.pagination.PageRequest;
 import com.followMe.common.pagination.PageResponse;
 import com.followMe.common.response.ApiResponse;
 import com.followme.userserver.application.annotation.CurrentUser;
@@ -8,6 +7,10 @@ import com.followme.userserver.application.dto.UserRequest;
 import com.followme.userserver.application.dto.UserResponse;
 import com.followme.userserver.application.service.UserCommandService;
 import com.followme.userserver.application.service.UserQueryService;
+
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -15,87 +18,66 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class UserController {
 
     private final UserCommandService userCommandService;
     private final UserQueryService userQueryService;
 
     @PostMapping("/register")
+    @SecurityRequirements()
     public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody UserRequest.Register request) {
-        
         userCommandService.registerUser(request);
-
         return ApiResponse.created();
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse> getMyProfile(@CurrentUser UUID userId) {
-        
+    public ResponseEntity<ApiResponse> getMyProfile(
+            @Parameter(hidden = true) @CurrentUser UUID userId) {
         UserResponse.Info responseDto = userQueryService.getUserProfile(userId);
-        
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        return ApiResponse.ok(responseDto);
     }
 
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse> updateMyProfile(
-            @CurrentUser UUID userId,
+            @Parameter(hidden = true) @CurrentUser UUID userId,
             @RequestBody UserRequest.UpdateProfile request) {
-
         UserResponse.Info responseDto = userCommandService.updateUserProfile(userId, request);
-        
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        return ApiResponse.ok(responseDto);
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse> deactivateMyAccount(@CurrentUser UUID userId) {
-        
+    public ResponseEntity<ApiResponse> deactivateMyAccount(
+            @Parameter(hidden = true) @CurrentUser UUID userId) {
         userCommandService.deactivateMyAccount(userId);
-        
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ApiResponse.ok();
     }
     
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse> updateUserStatus(
             @PathVariable UUID userId,
             @RequestBody UserRequest.UpdateStatus request) {
-        
         UserResponse.Info responseDto = userCommandService.updateUserStatus(userId, request);
-        
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        return ApiResponse.ok(responseDto);
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable UUID userId) {
-        
         UserResponse.Info responseDto = userQueryService.getUserById(userId);
-        
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        return ApiResponse.ok(responseDto);
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
-        // 1. common-lib의 PageRequest를 통해 검증된 Pageable 객체 생성 (10, 30, 50 사이즈 강제)
-        Pageable pageable = PageRequest.of(page, size).toPageable();
-
+        Pageable pageable = com.followMe.common.pagination.PageRequest.of(page, size).toPageable();
         PageResponse<UserResponse.Info> responseDto = userQueryService.getAllUsers(pageable);
-
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        return ApiResponse.ok(responseDto);
     }
-
 }
